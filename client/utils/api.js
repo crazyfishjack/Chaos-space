@@ -9,7 +9,7 @@
 // ============================================
 
 // 开发模式：true = 本地开发, false = 云托管生产环境
-const IS_LOCAL_DEV = true;
+const IS_LOCAL_DEV =  false;
 
 // 本地开发地址
 const LOCAL_API_BASE = 'http://localhost:8000/api/v1';
