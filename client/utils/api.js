@@ -4,22 +4,36 @@
  * 适配微信云托管环境
  */
 
+// ============================================
+// 重要：请修改下面的配置
+// ============================================
+
 // 本地开发使用 localhost，生产环境使用云托管服务
-const isDev = false; // 设置为 false 使用云托管
+const isDev = false; // true = 本地开发, false = 云托管
 
 // 本地开发地址
 const DEV_API_BASE = 'http://localhost:8000/api/v1';
 
-// 微信云托管地址（部署后替换为实际地址）
-// 格式: https://<服务名>-<环境ID>.service.tcloudbase.com/api/v1
-const PROD_API_BASE = 'https://game-backend-xxx.service.tcloudbase.com/api/v1';
+// 微信云托管地址（已配置为实际域名）
+const PROD_API_BASE = 'https://game-backend-260506-9-1435369677.sh.run.tcloudbase.com/api/v1';
+
+// ============================================
 
 const API_BASE_URL = isDev ? DEV_API_BASE : PROD_API_BASE;
+
+// 检查是否配置了正确的域名
+if (!isDev && PROD_API_BASE.includes('xxx')) {
+  console.error('========================================');
+  console.error('错误：请修改 api.js 中的 PROD_API_BASE');
+  console.error('将 xxx 替换为实际的云托管域名');
+  console.error('========================================');
+}
 
 class ApiClient {
   constructor() {
     this.baseURL = API_BASE_URL;
     this.token = wx.getStorageSync('access_token') || '';
+    console.log('API Base URL:', this.baseURL);
   }
 
   /**
@@ -53,20 +67,28 @@ class ApiClient {
         header['Authorization'] = `Bearer ${this.token}`;
       }
 
+      const url = `${this.baseURL}${options.url}`;
+      console.log('Request URL:', url);
+
       wx.request({
-        url: `${this.baseURL}${options.url}`,
+        url: url,
         method: options.method || 'GET',
         data: options.data,
         header: header,
         success: (res) => {
+          console.log('Response status:', res.statusCode);
+          console.log('Response data:', res.data);
+          
           if (res.statusCode >= 200 && res.statusCode < 300) {
             resolve(res.data);
           } else if (res.statusCode === 401) {
             // 认证失败，清除token
             this.clearToken();
             reject(new Error('登录已过期，请重新登录'));
+          } else if (res.statusCode === 404) {
+            reject(new Error('接口不存在，请检查后端服务是否正常部署'));
           } else {
-            reject(new Error(res.data?.detail || '请求失败'));
+            reject(new Error(res.data?.detail || `请求失败(${res.statusCode})`));
           }
         },
         fail: (err) => {
