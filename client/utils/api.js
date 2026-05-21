@@ -1,17 +1,21 @@
 /**
  * API请求工具层
  * 封装所有后端接口调用
- * 适配微信云托管环境 - 使用 callContainer 免鉴权调用
+ * 支持本地开发和云托管两种模式
  */
 
 // ============================================
-// 微信云托管配置
+// 环境配置 - 修改这里切换开发模式
 // ============================================
 
-// 云环境ID
-const CLOUD_ENV = 'prod';
+// 开发模式：true = 本地开发, false = 云托管生产环境
+const IS_LOCAL_DEV = true;
 
-// 服务名称
+// 本地开发地址
+const LOCAL_API_BASE = 'http://localhost:8000/api/v1';
+
+// 微信云托管配置（生产环境）
+const CLOUD_ENV = 'prod';
 const SERVICE_NAME = 'game-backend';
 
 // ============================================
@@ -19,7 +23,12 @@ const SERVICE_NAME = 'game-backend';
 class ApiClient {
   constructor() {
     this.token = wx.getStorageSync('access_token') || '';
-    console.log('API Client initialized for 微信云托管 callContainer');
+    this.isLocalDev = IS_LOCAL_DEV;
+    
+    console.log(`API Client 模式: ${this.isLocalDev ? '本地开发' : '云托管生产'}`);
+    if (this.isLocalDev) {
+      console.log(`本地API地址: ${LOCAL_API_BASE}`);
+    }
   }
 
   /**
@@ -39,10 +48,74 @@ class ApiClient {
   }
 
   /**
-   * 使用微信云托管 callContainer 发送请求
-   * 免鉴权方式，内网调用，更安全更快速
+   * 发送HTTP请求
+   * 根据环境自动选择本地请求或云托管 callContainer
    */
   request(options) {
+    if (this.isLocalDev) {
+      return this.localRequest(options);
+    } else {
+      return this.cloudRequest(options);
+    }
+  }
+
+  /**
+   * 本地开发模式 - 使用 wx.request 直接访问 localhost
+   */
+  localRequest(options) {
+    return new Promise((resolve, reject) => {
+      const header = {
+        'Content-Type': 'application/json',
+        ...options.header
+      };
+
+      // 添加认证头
+      if (this.token && options.auth !== false) {
+        header['Authorization'] = `Bearer ${this.token}`;
+      }
+
+      const url = `${LOCAL_API_BASE}${options.url}`;
+      console.log('本地开发请求:', {
+        url: url,
+        method: options.method || 'GET'
+      });
+
+      wx.request({
+        url: url,
+        method: options.method || 'GET',
+        data: options.data || {},
+        header: header,
+        success: (res) => {
+          console.log('本地响应:', res.statusCode, res.data);
+          
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve(res.data);
+          } else if (res.statusCode === 401) {
+            this.clearToken();
+            reject(new Error('登录已过期，请重新登录'));
+          } else if (res.statusCode === 404) {
+            reject(new Error('接口不存在，请检查后端服务是否已启动'));
+          } else {
+            const errorMsg = res.data?.detail || `请求失败(${res.statusCode})`;
+            reject(new Error(errorMsg));
+          }
+        },
+        fail: (err) => {
+          console.error('本地请求失败:', err);
+          if (err.errMsg && err.errMsg.includes('fail')) {
+            reject(new Error('无法连接到本地后端，请确保后端服务已启动 (python -m uvicorn app.main:app --reload --port 8000)'));
+          } else {
+            reject(new Error('网络请求失败'));
+          }
+        }
+      });
+    });
+  }
+
+  /**
+   * 云托管生产模式 - 使用 callContainer
+   */
+  cloudRequest(options) {
     return new Promise((resolve, reject) => {
       const header = {
         'Content-Type': 'application/json',
@@ -50,12 +123,11 @@ class ApiClient {
         ...options.header
       };
 
-      // 添加认证头（需要认证的接口）
       if (this.token && options.auth !== false) {
         header['Authorization'] = `Bearer ${this.token}`;
       }
 
-      console.log('callContainer Request:', {
+      console.log('callContainer 请求:', {
         path: options.url,
         method: options.method || 'GET',
         env: CLOUD_ENV,
@@ -71,22 +143,17 @@ class ApiClient {
         data: options.data || {},
         header: header,
         success: (res) => {
-          console.log('callContainer Response:', res);
-          
-          // callContainer 返回的数据在 res.data 中
+          console.log('callContainer 响应:', res);
           const responseData = res.data;
           
-          // 检查 HTTP 状态码
           if (res.statusCode >= 200 && res.statusCode < 300) {
             resolve(responseData);
           } else if (res.statusCode === 401) {
-            // 认证失败，清除token
             this.clearToken();
             reject(new Error('登录已过期，请重新登录'));
           } else if (res.statusCode === 404) {
             reject(new Error('接口不存在，请检查后端服务是否正常部署'));
           } else {
-            // 后端返回的错误信息在 detail 字段
             const errorMsg = responseData?.detail || `请求失败(${res.statusCode})`;
             reject(new Error(errorMsg));
           }
@@ -102,23 +169,32 @@ class ApiClient {
   // ========== 认证相关接口 ==========
 
   /**
-   * 微信登录 - 云托管免鉴权方式
-   * 无需传递 code，微信自动在 Header 中注入 openid
+   * 微信登录
+   * 本地开发：使用传统 code 方式
+   * 云托管：使用免鉴权方式
    */
-  wxLogin() {
-    return this.request({
-      url: '/auth/wx-login',
-      method: 'POST',
-      data: {},  // 空对象，不需要传递 code
-      auth: false  // 不需要认证
-    });
+  wxLogin(code) {
+    if (this.isLocalDev) {
+      // 本地开发：需要传递 code
+      return this.request({
+        url: '/auth/wx-login',
+        method: 'POST',
+        data: { code: code },
+        auth: false
+      });
+    } else {
+      // 云托管：免鉴权，不需要 code
+      return this.request({
+        url: '/auth/wx-login',
+        method: 'POST',
+        data: {},
+        auth: false
+      });
+    }
   }
 
   // ========== 用户相关接口 ==========
 
-  /**
-   * 获取当前用户信息
-   */
   getUserInfo() {
     return this.request({
       url: '/user/me',
@@ -126,10 +202,6 @@ class ApiClient {
     });
   }
 
-  /**
-   * 创建角色
-   * @param {string} name - 角色名称
-   */
   createCharacter(name) {
     return this.request({
       url: '/user/character',
@@ -138,9 +210,6 @@ class ApiClient {
     });
   }
 
-  /**
-   * 获取当前角色信息
-   */
   getCharacter() {
     return this.request({
       url: '/user/character',

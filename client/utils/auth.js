@@ -1,7 +1,7 @@
 /**
  * 认证工具层
  * 处理微信登录、token管理等
- * 使用微信云托管 callContainer 免鉴权方式
+ * 支持本地开发和云托管两种模式
  */
 
 const { api } = require('./api');
@@ -22,14 +22,69 @@ class AuthManager {
   }
 
   /**
-   * 执行微信登录 - 云托管免鉴权方式
-   * 无需调用 wx.login 获取 code，直接通过 callContainer 登录
-   * 微信自动在请求 Header 中注入 openid
+   * 执行微信登录
+   * 本地开发：使用 wx.login 获取 code
+   * 云托管：使用 callContainer 免鉴权
    */
-  async login() {
-    try {
-      console.log('开始云托管免鉴权登录...');
+  login() {
+    return new Promise((resolve, reject) => {
+      // 检查是否为本地开发模式
+      const isLocalDev = api.isLocalDev;
       
+      if (isLocalDev) {
+        // 本地开发模式：使用传统 wx.login 获取 code
+        console.log('本地开发模式：使用 wx.login 获取 code');
+        this.localLogin(resolve, reject);
+      } else {
+        // 云托管模式：使用免鉴权方式
+        console.log('云托管模式：使用 callContainer 免鉴权登录');
+        this.cloudLogin(resolve, reject);
+      }
+    });
+  }
+
+  /**
+   * 本地开发登录 - 使用 wx.login 获取 code
+   */
+  localLogin(resolve, reject) {
+    wx.login({
+      success: async (res) => {
+        if (res.code) {
+          try {
+            // 调用后端登录接口，传递 code
+            const loginRes = await api.wxLogin(res.code);
+            
+            // 保存token
+            api.setToken(loginRes.access_token);
+            this.isLoggedIn = true;
+            
+            // 保存用户信息
+            wx.setStorageSync('user_id', loginRes.user_id);
+            wx.setStorageSync('has_character', loginRes.has_character);
+            
+            resolve({
+              success: true,
+              hasCharacter: loginRes.has_character,
+              userId: loginRes.user_id
+            });
+          } catch (error) {
+            reject(error);
+          }
+        } else {
+          reject(new Error('微信登录失败'));
+        }
+      },
+      fail: (err) => {
+        reject(new Error('微信登录调用失败'));
+      }
+    });
+  }
+
+  /**
+   * 云托管登录 - 使用 callContainer 免鉴权
+   */
+  async cloudLogin(resolve, reject) {
+    try {
       // 调用后端登录接口 - 云托管方式，无需传递 code
       const loginRes = await api.wxLogin();
       
@@ -43,14 +98,14 @@ class AuthManager {
       wx.setStorageSync('user_id', loginRes.user_id);
       wx.setStorageSync('has_character', loginRes.has_character);
       
-      return {
+      resolve({
         success: true,
         hasCharacter: loginRes.has_character,
         userId: loginRes.user_id
-      };
+      });
     } catch (error) {
       console.error('登录失败:', error);
-      throw error;
+      reject(error);
     }
   }
 
