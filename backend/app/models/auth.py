@@ -4,7 +4,7 @@ from typing import Optional
 
 class WXLoginRequest(BaseModel):
     """微信登录请求模型"""
-    code: str = Field(..., description="微信登录临时凭证")
+    code: Optional[str] = Field(None, description="微信登录临时凭证（云托管免鉴权方式可不传）")
 
 
 class WXLoginResponse(BaseModel):
