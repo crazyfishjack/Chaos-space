@@ -1,0 +1,41 @@
+# 忽略文件
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+.git
+.gitignore
+.env
+.venv
+venv
+ENV
+env
+.pytest_cache
+.coverage
+htmlcov
+.tox
+.nox
+.hypothesis
+.eggs
+*.log
+.DS_Store
+Thumbs.db
+
+# 忽略前端代码（不需要打包到后端镜像）
+client/
+DOCS/
+data/
+
+# 忽略小游戏配置文件
+game.js
+game.json
+project.config.json
+project.private.config.json
+开发手册.txt
+README.md
