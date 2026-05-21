@@ -15,7 +15,7 @@ const IS_LOCAL_DEV =  false;
 const LOCAL_API_BASE = 'http://localhost:8000/api/v1';
 
 // 微信云托管配置（生产环境）
-const CLOUD_ENV = 'prod';
+const CLOUD_ENV = 'cloud1';
 const SERVICE_NAME = 'game-backend';
 
 // ============================================
