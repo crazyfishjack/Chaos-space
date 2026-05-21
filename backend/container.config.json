@@ -1,0 +1,18 @@
+{
+  "containerPort": 80,
+  "minNum": 0,
+  "maxNum": 10,
+  "cpu": 0.25,
+  "mem": 0.5,
+  "policyType": "cpu",
+  "policyThreshold": 60,
+  "envParams": {
+    "WX_APPID": "wxc1866a83176814d3",
+    "WX_SECRET": "",
+    "SECRET_KEY": "your-super-secret-key-change-this-in-production",
+    "ACCESS_TOKEN_EXPIRE_MINUTES": "120"
+  },
+  "customLogs": "stdout",
+  "dataBaseName": "game_data",
+  "executeSQLs": []
+}
