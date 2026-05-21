@@ -25,6 +25,12 @@ class Database:
     def _ensure_data_dir(self):
         """确保数据目录和文件存在"""
         try:
+            # 如果路径以/开头但在Windows上运行，改用本地data目录
+            if self.data_dir.startswith('/') and os.name == 'nt':
+                self.data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data')
+                self.users_file = os.path.join(self.data_dir, "users.json")
+                self.characters_file = os.path.join(self.data_dir, "characters.json")
+            
             if not os.path.exists(self.data_dir):
                 os.makedirs(self.data_dir, exist_ok=True)
             
@@ -34,8 +40,8 @@ class Database:
                         json.dump({}, f)
         except Exception as e:
             print(f"创建数据目录失败: {e}")
-            # 如果创建失败，使用临时目录
-            self.data_dir = "/tmp/data"
+            # 如果创建失败，使用当前目录下的data文件夹
+            self.data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data')
             self.users_file = os.path.join(self.data_dir, "users.json")
             self.characters_file = os.path.join(self.data_dir, "characters.json")
             os.makedirs(self.data_dir, exist_ok=True)
