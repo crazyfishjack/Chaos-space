@@ -1,39 +1,25 @@
 /**
  * API请求工具层
  * 封装所有后端接口调用
- * 适配微信云托管环境
+ * 适配微信云托管环境 - 使用 callContainer 免鉴权调用
  */
 
 // ============================================
-// 重要：请修改下面的配置
+// 微信云托管配置
 // ============================================
 
-// 本地开发使用 localhost，生产环境使用云托管服务
-const isDev = false; // true = 本地开发, false = 云托管
+// 云环境ID
+const CLOUD_ENV = 'prod';
 
-// 本地开发地址
-const DEV_API_BASE = 'http://localhost:8000/api/v1';
-
-// 微信云托管地址（已配置为实际域名）
-const PROD_API_BASE = 'https://game-backend-260506-9-1435369677.sh.run.tcloudbase.com/api/v1';
+// 服务名称
+const SERVICE_NAME = 'game-backend';
 
 // ============================================
-
-const API_BASE_URL = isDev ? DEV_API_BASE : PROD_API_BASE;
-
-// 检查是否配置了正确的域名
-if (!isDev && PROD_API_BASE.includes('xxx')) {
-  console.error('========================================');
-  console.error('错误：请修改 api.js 中的 PROD_API_BASE');
-  console.error('将 xxx 替换为实际的云托管域名');
-  console.error('========================================');
-}
 
 class ApiClient {
   constructor() {
-    this.baseURL = API_BASE_URL;
     this.token = wx.getStorageSync('access_token') || '';
-    console.log('API Base URL:', this.baseURL);
+    console.log('API Client initialized for 微信云托管 callContainer');
   }
 
   /**
@@ -53,34 +39,46 @@ class ApiClient {
   }
 
   /**
-   * 发送HTTP请求
+   * 使用微信云托管 callContainer 发送请求
+   * 免鉴权方式，内网调用，更安全更快速
    */
   request(options) {
     return new Promise((resolve, reject) => {
       const header = {
         'Content-Type': 'application/json',
+        'X-WX-SERVICE': SERVICE_NAME,
         ...options.header
       };
 
-      // 添加认证头
+      // 添加认证头（需要认证的接口）
       if (this.token && options.auth !== false) {
         header['Authorization'] = `Bearer ${this.token}`;
       }
 
-      const url = `${this.baseURL}${options.url}`;
-      console.log('Request URL:', url);
-
-      wx.request({
-        url: url,
+      console.log('callContainer Request:', {
+        path: options.url,
         method: options.method || 'GET',
-        data: options.data,
+        env: CLOUD_ENV,
+        service: SERVICE_NAME
+      });
+
+      wx.cloud.callContainer({
+        config: {
+          env: CLOUD_ENV,
+        },
+        path: '/api/v1' + options.url,
+        method: options.method || 'GET',
+        data: options.data || {},
         header: header,
         success: (res) => {
-          console.log('Response status:', res.statusCode);
-          console.log('Response data:', res.data);
+          console.log('callContainer Response:', res);
           
+          // callContainer 返回的数据在 res.data 中
+          const responseData = res.data;
+          
+          // 检查 HTTP 状态码
           if (res.statusCode >= 200 && res.statusCode < 300) {
-            resolve(res.data);
+            resolve(responseData);
           } else if (res.statusCode === 401) {
             // 认证失败，清除token
             this.clearToken();
@@ -88,12 +86,14 @@ class ApiClient {
           } else if (res.statusCode === 404) {
             reject(new Error('接口不存在，请检查后端服务是否正常部署'));
           } else {
-            reject(new Error(res.data?.detail || `请求失败(${res.statusCode})`));
+            // 后端返回的错误信息在 detail 字段
+            const errorMsg = responseData?.detail || `请求失败(${res.statusCode})`;
+            reject(new Error(errorMsg));
           }
         },
         fail: (err) => {
-          console.error('请求失败:', err);
-          reject(new Error('网络请求失败，请检查网络连接'));
+          console.error('callContainer 请求失败:', err);
+          reject(new Error('网络请求失败，请检查网络连接或云托管配置'));
         }
       });
     });
@@ -102,15 +102,15 @@ class ApiClient {
   // ========== 认证相关接口 ==========
 
   /**
-   * 微信登录
-   * @param {string} code - 微信登录临时凭证
+   * 微信登录 - 云托管免鉴权方式
+   * 无需传递 code，微信自动在 Header 中注入 openid
    */
-  wxLogin(code) {
+  wxLogin() {
     return this.request({
       url: '/auth/wx-login',
       method: 'POST',
-      data: { code },
-      auth: false
+      data: {},  // 空对象，不需要传递 code
+      auth: false  // 不需要认证
     });
   }
 

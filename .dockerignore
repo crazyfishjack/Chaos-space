@@ -1,4 +1,8 @@
-# 忽略文件
+# Git
+.git
+.gitignore
+
+# Python
 __pycache__
 *.pyc
 *.pyo
@@ -9,33 +13,31 @@ __pycache__
 *.egg-info
 dist
 build
-.git
-.gitignore
-.env
-.venv
+
+# 虚拟环境
 venv
-ENV
 env
-.pytest_cache
-.coverage
-htmlcov
-.tox
-.nox
-.hypothesis
-.eggs
-*.log
-.DS_Store
-Thumbs.db
+ENV
 
-# 忽略前端代码（不需要打包到后端镜像）
-client/
-DOCS/
-data/
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
 
-# 忽略小游戏配置文件
-game.js
-game.json
-project.config.json
-project.private.config.json
+# 文档
+DOCS
+*.md
 开发手册.txt
-README.md
+开发要求.txt
+
+# 数据文件（运行时生成）
+data/*.json
+
+# 前端代码（不需要打包到后端镜像）
+client
+
+# 其他
+.dockerignore
+Dockerfile
+container.config.json

@@ -1,6 +1,7 @@
 /**
  * 认证工具层
  * 处理微信登录、token管理等
+ * 使用微信云托管 callContainer 免鉴权方式
  */
 
 const { api } = require('./api');
@@ -21,43 +22,36 @@ class AuthManager {
   }
 
   /**
-   * 执行微信登录
-   * 调用微信API获取code，然后请求后端登录
+   * 执行微信登录 - 云托管免鉴权方式
+   * 无需调用 wx.login 获取 code，直接通过 callContainer 登录
+   * 微信自动在请求 Header 中注入 openid
    */
-  login() {
-    return new Promise((resolve, reject) => {
-      wx.login({
-        success: async (res) => {
-          if (res.code) {
-            try {
-              // 调用后端登录接口
-              const loginRes = await api.wxLogin(res.code);
-              
-              // 保存token
-              api.setToken(loginRes.access_token);
-              this.isLoggedIn = true;
-              
-              // 保存用户信息
-              wx.setStorageSync('user_id', loginRes.user_id);
-              wx.setStorageSync('has_character', loginRes.has_character);
-              
-              resolve({
-                success: true,
-                hasCharacter: loginRes.has_character,
-                userId: loginRes.user_id
-              });
-            } catch (error) {
-              reject(error);
-            }
-          } else {
-            reject(new Error('微信登录失败'));
-          }
-        },
-        fail: (err) => {
-          reject(new Error('微信登录调用失败'));
-        }
-      });
-    });
+  async login() {
+    try {
+      console.log('开始云托管免鉴权登录...');
+      
+      // 调用后端登录接口 - 云托管方式，无需传递 code
+      const loginRes = await api.wxLogin();
+      
+      console.log('登录成功:', loginRes);
+      
+      // 保存token
+      api.setToken(loginRes.access_token);
+      this.isLoggedIn = true;
+      
+      // 保存用户信息
+      wx.setStorageSync('user_id', loginRes.user_id);
+      wx.setStorageSync('has_character', loginRes.has_character);
+      
+      return {
+        success: true,
+        hasCharacter: loginRes.has_character,
+        userId: loginRes.user_id
+      };
+    } catch (error) {
+      console.error('登录失败:', error);
+      throw error;
+    }
   }
 
   /**

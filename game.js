@@ -18,6 +18,17 @@ class GameApp {
   init() {
     console.log('游戏初始化开始...');
     
+    // 初始化微信云开发能力（必须在使用 callContainer 前调用）
+    if (wx.cloud) {
+      wx.cloud.init({
+        env: 'prod',  // 云环境ID
+        traceUser: true  // 是否记录用户访问日志
+      });
+      console.log('微信云开发初始化完成');
+    } else {
+      console.error('微信云开发能力不可用，请检查基础库版本');
+    }
+    
     // 获取Canvas上下文
     const canvas = wx.createCanvas();
     const ctx = canvas.getContext('2d');
