@@ -1,17 +1,12 @@
-import os
+"""
+数据库模块初始化
+统一使用微信云数据库作为唯一数据存储方案，完全异步实现
+与 FastAPI 异步架构保持一致，避免事件循环冲突
+"""
 
-# 根据环境变量选择数据库实现
-USE_WX_CLOUD_DB = os.getenv('USE_WX_CLOUD_DB', 'false').lower() == 'true'
+from .wx_cloud_db import WxCloudDatabase as Database
 
-if USE_WX_CLOUD_DB:
-    # 使用微信云数据库
-    from .wx_cloud_db import WxCloudDatabaseSync as Database
-    db = Database()
-    print("[数据库] 使用微信云数据库")
-else:
-    # 使用本地JSON文件存储
-    from .database import Database
-    db = Database()
-    print("[数据库] 使用本地JSON文件存储")
+# 全局数据库实例 - 直接使用微信云数据库异步类
+db = Database()
 
 __all__ = ["Database", "db"]

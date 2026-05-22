@@ -1,6 +1,6 @@
 /**
  * 登录场景
- * 使用Canvas绘制登录界面
+ * 白底简约高级风格
  */
 
 const { BaseScene } = require('./base');
@@ -9,16 +9,33 @@ const { auth } = require('../utils/auth');
 class LoginScene extends BaseScene {
   constructor(ctx, width, height, sceneManager) {
     super(ctx, width, height, sceneManager);
-    
+
     // 按钮配置
     this.loginBtn = {
-      x: width * 0.1,
-      y: height * 0.6,
-      width: width * 0.8,
-      height: 50
+      x: width * 0.15,
+      y: height * 0.68,
+      width: width * 0.7,
+      height: 48
     };
-    
+
     this.isLoading = false;
+    this.logoImage = null;
+    this.loadLogo();
+  }
+
+  /**
+   * 加载PNG Logo
+   */
+  loadLogo() {
+    const img = wx.createImage();
+    img.src = 'image/chaos_space.png';
+    img.onload = () => {
+      this.logoImage = img;
+      this.render();
+    };
+    img.onerror = () => {
+      console.error('Logo加载失败');
+    };
   }
 
   /**
@@ -26,21 +43,26 @@ class LoginScene extends BaseScene {
    */
   render() {
     this.clear();
-    
-    // 绘制背景
-    this.drawBackground();
-    
-    // 绘制Logo区域
+
+    // 绘制白色背景
+    this.drawWhiteBackground();
+
+    // 绘制Logo
     this.drawLogo();
-    
-    // 绘制标题
-    this.drawTitle();
-    
+
     // 绘制登录按钮
     this.drawLoginButton();
-    
+
     // 绘制提示文字
     this.drawTips();
+  }
+
+  /**
+   * 绘制白色背景
+   */
+  drawWhiteBackground() {
+    this.ctx.fillStyle = '#ffffff';
+    this.ctx.fillRect(0, 0, this.width, this.height);
   }
 
   /**
@@ -48,39 +70,24 @@ class LoginScene extends BaseScene {
    */
   drawLogo() {
     const centerX = this.width / 2;
-    const centerY = this.height * 0.25;
-    const radius = 40;
-    
-    // Logo圆形背景
-    this.ctx.beginPath();
-    this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-    this.ctx.fill();
-    
-    // Logo文字
-    this.ctx.fillStyle = '#ffffff';
-    this.ctx.font = 'bold 24px sans-serif';
-    this.ctx.textAlign = 'center';
-    this.ctx.textBaseline = 'middle';
-    this.ctx.fillText('游戏', centerX, centerY);
-  }
+    const centerY = this.height * 0.35;
 
-  /**
-   * 绘制标题
-   */
-  drawTitle() {
-    const centerX = this.width / 2;
-    
-    // 主标题
-    this.ctx.fillStyle = '#ffffff';
-    this.ctx.font = 'bold 28px sans-serif';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText('欢迎进入游戏世界', centerX, this.height * 0.42);
-    
-    // 副标题
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    this.ctx.font = '14px sans-serif';
-    this.ctx.fillText('使用微信账号快速登录', centerX, this.height * 0.48);
+    if (this.logoImage) {
+      // 计算SVG显示尺寸
+      const logoWidth = Math.min(this.width * 0.7, 320);
+      const logoHeight = logoWidth * 0.2;
+      const x = centerX - logoWidth / 2;
+      const y = centerY - logoHeight / 2;
+
+      this.ctx.drawImage(this.logoImage, x, y, logoWidth, logoHeight);
+    } else {
+      // 加载中显示占位文字
+      this.ctx.fillStyle = '#1a1a2e';
+      this.ctx.font = '300 24px sans-serif';
+      this.ctx.textAlign = 'center';
+      this.ctx.textBaseline = 'middle';
+      this.ctx.fillText('混沌空间', centerX, centerY);
+    }
   }
 
   /**
@@ -89,22 +96,41 @@ class LoginScene extends BaseScene {
   drawLoginButton() {
     const btn = this.loginBtn;
     const text = this.isLoading ? '登录中...' : '微信一键登录';
-    const bgColor = this.isLoading ? 'rgba(7, 193, 96, 0.6)' : '#07c160';
-    
-    this.drawButton(btn.x, btn.y, btn.width, btn.height, text, bgColor);
+
+    // 绘制简约按钮
+    this.drawMinimalButton(btn.x, btn.y, btn.width, btn.height, text);
+  }
+
+  /**
+   * 绘制简约风格按钮
+   */
+  drawMinimalButton(x, y, width, height, text) {
+    const isLoading = text === '登录中...';
+
+    // 按钮背景 - 微信绿或灰色
+    this.ctx.fillStyle = isLoading ? 'rgba(7, 193, 96, 0.5)' : '#07c160';
+    this.roundRect(x, y, width, height, 8);
+    this.ctx.fill();
+
+    // 按钮文字
+    this.ctx.fillStyle = '#ffffff';
+    this.ctx.font = '500 16px sans-serif';
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'middle';
+    this.ctx.fillText(text, x + width / 2, y + height / 2);
   }
 
   /**
    * 绘制提示文字
    */
   drawTips() {
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    this.ctx.fillStyle = '#999999';
     this.ctx.font = '12px sans-serif';
     this.ctx.textAlign = 'center';
     this.ctx.fillText(
       '登录即表示同意《用户协议》和《隐私政策》',
       this.width / 2,
-      this.height * 0.75
+      this.height * 0.82
     );
   }
 

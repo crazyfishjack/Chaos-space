@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" width="400" height="80">
+  <defs>
+    <!-- 高级蓝灰渐变 -->
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:0.95" />
+      <stop offset="50%" style="stop-color:#2d4a6f;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#4a6fa5;stop-opacity:0.85" />
+    </linearGradient>
+    
+    <!-- 柔和发光 -->
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    
+    <!-- 微妙阴影 -->
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#1a1a2e" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- 文字：混 -->
+  <text x="55" y="52" font-family="'Microsoft YaHei', 'PingFang SC', sans-serif" font-size="38" font-weight="300" fill="url(#primaryGrad)" filter="url(#dropShadow)">混</text>
+  
+  <!-- 文字：沌 -->
+  <text x="135" y="52" font-family="'Microsoft YaHei', 'PingFang SC', sans-serif" font-size="38" font-weight="300" fill="url(#primaryGrad)" filter="url(#dropShadow)">沌</text>
+  
+  <!-- 文字：空 -->
+  <text x="215" y="52" font-family="'Microsoft YaHei', 'PingFang SC', sans-serif" font-size="38" font-weight="300" fill="url(#primaryGrad)" filter="url(#dropShadow)">空</text>
+  
+  <!-- 文字：间 -->
+  <text x="295" y="52" font-family="'Microsoft YaHei', 'PingFang SC', sans-serif" font-size="38" font-weight="300" fill="url(#primaryGrad)" filter="url(#dropShadow)">间</text>
+  
+  <!-- 极简装饰点 -->
+  <circle cx="108" cy="42" r="1.5" fill="#4a6fa5" opacity="0.6"/>
+  <circle cx="188" cy="42" r="1.5" fill="#4a6fa5" opacity="0.6"/>
+  <circle cx="268" cy="42" r="1.5" fill="#4a6fa5" opacity="0.6"/>
+</svg>

@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     
     # 服务器配置
     HOST: str = "0.0.0.0"
-    PORT: int = 80  # 微信云托管使用80端口
+    PORT: int = 8000  # 本地开发使用8000端口，微信云托管使用80端口
     
     # 安全配置
     SECRET_KEY: str = "your-secret-key-change-in-production"
@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     
     # 数据存储配置 - 微信云托管使用 /app/data
     DATA_DIR: str = "/app/data"
+    
+    # 数据库配置
+    USE_WX_CLOUD_DB: bool = True  # 启用微信云数据库，完全替代本地数据库
     
     class Config:
         env_file = ".env"

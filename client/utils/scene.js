@@ -32,9 +32,11 @@ class SceneManager {
    */
   async start() {
     try {
+      // 启动时先做会话自检；有效或自动重登成功后直接进入主场景。
       await auth.ensureSession();
       this.switchScene('main');
     } catch (error) {
+      // 自检和自动登录都失败时再进入登录场景，让用户手动重试。
       console.warn('会话初始化失败:', error);
       this.switchScene('login');
     }

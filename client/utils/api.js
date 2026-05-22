@@ -13,6 +13,7 @@ class ApiClient {
   }
 
   setAuthProvider(authProvider) {
+    // AuthManager 在初始化后注入进来，避免 api.js 和 auth.js 形成不可控循环依赖。
     this.authProvider = authProvider;
   }
 
@@ -27,6 +28,7 @@ class ApiClient {
   }
 
   async request(options) {
+    // auth 表示是否携带 Bearer token，skipAuthRetry 用来防止重试递归。
     const requestOptions = {
       auth: true,
       skipAuthRetry: false,
@@ -40,6 +42,7 @@ class ApiClient {
         throw error;
       }
 
+      // 业务接口遇到 401 时自动静默重登一次，再用新 token 重试原请求。
       await this.authProvider.login();
       return this.sendRequest({
         ...requestOptions,
@@ -49,6 +52,7 @@ class ApiClient {
   }
 
   shouldRetryAuth(error, options) {
+    // 登录接口本身、已重试过的请求、非 401 错误都不触发自动重登。
     return options.auth !== false &&
       !options.skipAuthRetry &&
       error &&
@@ -108,6 +112,7 @@ class ApiClient {
       ...extraHeader
     };
 
+    // 只有需要鉴权的业务接口才附加 JWT，登录接口保持免鉴权。
     if (this.token && auth !== false) {
       header.Authorization = `Bearer ${this.token}`;
     }
@@ -122,6 +127,7 @@ class ApiClient {
     }
 
     if (res.statusCode === 401) {
+      // 本地 token 已被服务端拒绝，先清掉，交给 request() 决定是否自动重登。
       this.clearToken();
     }
 
@@ -133,6 +139,7 @@ class ApiClient {
   }
 
   wxLogin(code) {
+    // 云托管生产环境依赖 callContainer 注入 openid；本地开发才传 wx.login 的 code。
     return this.request({
       url: '/auth/wx-login',
       method: 'POST',
