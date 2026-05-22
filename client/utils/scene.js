@@ -30,11 +30,12 @@ class SceneManager {
   /**
    * 启动场景管理器
    */
-  start() {
-    // 检查登录状态，决定初始场景
-    if (auth.checkLoginStatus()) {
+  async start() {
+    try {
+      await auth.ensureSession();
       this.switchScene('main');
-    } else {
+    } catch (error) {
+      console.warn('会话初始化失败:', error);
       this.switchScene('login');
     }
   }

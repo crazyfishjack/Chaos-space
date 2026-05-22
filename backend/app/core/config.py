@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     # 微信小程序配置
     WX_APPID: str = "wxc1866a83176814d3"
     WX_SECRET: str = ""  # 需要在微信云托管控制台设置环境变量
+    WX_CLOUD_ENV: str = "cloud1-d1gyxu8meb8f66096"
     
     # CORS配置 - 微信云托管需要配置小程序域名
     ALLOWED_ORIGINS: list = ["*"]

@@ -5,6 +5,7 @@
 
 // 引入场景管理器
 const { SceneManager } = require('./client/utils/scene');
+const { CLOUD_ENV } = require('./client/config/env');
 
 class GameApp {
   constructor() {
@@ -21,7 +22,7 @@ class GameApp {
     // 初始化微信云开发能力（必须在使用 callContainer 前调用）
     if (wx.cloud) {
       wx.cloud.init({
-        env: 'prod',  // 云环境ID
+        env: CLOUD_ENV,  // 云环境ID
         traceUser: true  // 是否记录用户访问日志
       });
       console.log('微信云开发初始化完成');

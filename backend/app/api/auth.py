@@ -4,6 +4,7 @@ from typing import Optional
 from app.models import WXLoginRequest, WXLoginResponse, UserCreate
 from app.services import WechatService, UserService
 from app.core import create_access_token
+from app.core.config import settings
 from app.db import db
 
 router = APIRouter(prefix="/auth", tags=["认证"])
@@ -49,6 +50,11 @@ async def wechat_login(
         
         # 优先使用云托管注入的 Header 信息（免鉴权方式）
         if x_wx_openid:
+            if x_wx_appid != settings.WX_APPID:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="非法的小程序来源"
+                )
             openid = x_wx_openid
             unionid = x_wx_unionid
         elif login_data and login_data.code:

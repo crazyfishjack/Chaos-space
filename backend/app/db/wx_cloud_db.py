@@ -23,7 +23,7 @@ class WxCloudDatabase:
     WX_API_BASE = "https://api.weixin.qq.com"
     
     def __init__(self):
-        self.env = os.getenv('WX_CLOUD_ENV', 'prod')
+        self.env = settings.WX_CLOUD_ENV
         self.access_token = os.getenv('WX_CLOUD_ACCESS_TOKEN', '')
         self._collections = {
             'users': 'users',

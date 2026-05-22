@@ -8,6 +8,7 @@
   "policyThreshold": 60,
   "envParams": {
     "WX_APPID": "wxc1866a83176814d3",
+    "WX_CLOUD_ENV": "cloud1-d1gyxu8meb8f66096",
     "WX_SECRET": "",
     "SECRET_KEY": "your-super-secret-key-change-this-in-production",
     "ACCESS_TOKEN_EXPIRE_MINUTES": "120"
